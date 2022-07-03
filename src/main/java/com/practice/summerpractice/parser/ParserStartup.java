@@ -51,7 +51,7 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         Theme theme = new Theme();
         theme.setId(jsonObject.get("id").getAsInt());
         theme.setNumber(jsonObject.get("number").getAsString());
-        theme.setName(jsonObject.get("name").getAsJsonObject().entrySet().toArray()[0].toString().substring(4));
+        theme.setName(jsonObject.get("name").getAsJsonObject().entrySet().toArray()[0].toString().substring(4).replace("\"", ""));
         List<Rule> trafficRules = new LinkedList<>();
         Set<Map.Entry<String, JsonElement>> trafficRulesJson = jsonObject.get("item_traffic_rules").getAsJsonObject().entrySet();
         for (Map.Entry<String, JsonElement> entry : trafficRulesJson) {
