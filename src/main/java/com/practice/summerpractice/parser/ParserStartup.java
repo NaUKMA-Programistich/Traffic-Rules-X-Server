@@ -12,8 +12,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,14 +32,10 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         return new ExamDto();
     }
 
-    public static RulesDto parseRules() {
-        FileReader fileReader = null;
-        try {
-            fileReader = new FileReader("C:\\summer 22\\traffic\\src\\main\\resources\\rulesList.json");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        assert fileReader != null;
+    public RulesDto parseRules() {
+        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("rulesList.json");
+        assert resourceAsStream != null;
+        Reader fileReader = new InputStreamReader(resourceAsStream);
         JsonObject object = new JsonParser().parse(fileReader).getAsJsonObject();
         Set<Map.Entry<String, JsonElement>> themesJson = object.getAsJsonObject().entrySet();
         RulesDto rulesDto = new RulesDto();

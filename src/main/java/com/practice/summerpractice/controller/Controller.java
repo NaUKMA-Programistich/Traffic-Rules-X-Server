@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class Controller {
 
+    ParserStartup parserStartup = new ParserStartup();
+
     @ResponseBody
     @GetMapping("/rules")
     public RulesDto getRules() {
-        return ParserStartup.parseRules();
+        return parserStartup.parseRules();
     }
 
     @ResponseBody
