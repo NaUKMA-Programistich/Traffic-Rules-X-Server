@@ -65,7 +65,7 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         Rule rule = new Rule();
         rule.setId(jsonObject.get("id").getAsInt());
         rule.setThemeId(jsonObject.get("topic_traffic_rule_id").getAsInt());
-        rule.setNumber(jsonObject.get("number").toString());
+        rule.setNumber(jsonObject.get("number").toString().replace("\"", ""));
         rule.setDescription(jsonObject.get("description").getAsJsonObject().entrySet().toArray()[0].toString().substring(4));
         rule.setContent(jsonObject.get("content").getAsJsonObject().entrySet().toArray()[0].toString().substring(4));
         return rule;
