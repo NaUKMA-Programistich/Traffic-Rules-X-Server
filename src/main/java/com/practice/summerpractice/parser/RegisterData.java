@@ -82,10 +82,10 @@ public class RegisterData {
                 examPDR = getExamPDR();
                 requests = getAllCorrectAnswerRequests(examPDR);
             }
-
             httpPost.disconnect();
         }
         writeExamFile(new ExamDto(questionList));
+        log.info("Finished registering exam, ready to use");
     }
 
     private static void writeExamFile(ExamDto examDto) throws IOException {
