@@ -1,12 +1,7 @@
 package com.practice.summerpractice.parser;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.practice.summerpractice.entity.ExamDto;
-import com.practice.summerpractice.entity.Rule;
-import com.practice.summerpractice.entity.RulesDto;
-import com.practice.summerpractice.entity.Theme;
+import com.google.gson.*;
+import com.practice.summerpractice.entity.*;
 import lombok.SneakyThrows;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
@@ -24,12 +19,26 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
     @SneakyThrows
     @Override
     public void onApplicationEvent(final ApplicationReadyEvent event) {
-        RulesDto rulesDto = parseRules();
+        RegisterData.main(event.getArgs());
+        return;
     }
 
-    public static ExamDto parseExam(){
-        // TODO fill
-        return new ExamDto();
+    public ExamDto parseExam() {
+        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("examExample.json");
+        assert resourceAsStream != null;
+        Reader fileReader = new InputStreamReader(resourceAsStream);
+        JsonObject object = new JsonParser().parse(fileReader).getAsJsonObject();
+        Gson gson = new Gson();
+        return gson.fromJson(object, ExamDto.class);
+    }
+
+    public RulesDto parseFixedRules() {
+        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("rulesList.json");
+        assert resourceAsStream != null;
+        Reader fileReader = new InputStreamReader(resourceAsStream);
+        JsonObject object = new JsonParser().parse(fileReader).getAsJsonObject();
+        Gson gson = new Gson();
+        return gson.fromJson(object, RulesDto.class);
     }
 
     public RulesDto parseRules() {
@@ -66,8 +75,25 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         rule.setId(jsonObject.get("id").getAsInt());
         rule.setThemeId(jsonObject.get("topic_traffic_rule_id").getAsInt());
         rule.setNumber(jsonObject.get("number").toString().replace("\"", ""));
-        rule.setDescription(jsonObject.get("description").getAsJsonObject().entrySet().toArray()[0].toString().substring(4));
-        rule.setContent(jsonObject.get("content").getAsJsonObject().entrySet().toArray()[0].toString().substring(4));
+        String desc = jsonObject.get("description").getAsJsonObject().entrySet().toArray()[0].toString();
+        rule.setDescription(desc.substring(4, desc.length() - 1));
+        String content = jsonObject.get("content").getAsJsonObject().entrySet().toArray()[0].toString();
+        //TODO fix content \r\n + "Навчальне відео"
+        rule.setContent(content.substring(4, content.length() - 1));
         return rule;
     }
+
+    private static String parseContent(String content) {
+        content = content.substring(4, content.length() - 1);
+        content = content.replaceAll("Навчальне відео.*", "");
+                /*//.replaceAll("\\r\\n\\r\\n\"", "\n")
+                .replaceAll("\r\n\r\n-", "")
+                .replaceAll("\\r\\n\\r\\n", "\n")
+                .replaceAll("\t", "")
+                .replaceAll("\r\n", "")
+                .replaceAll(".\"", "");*/
+        content = content.replaceAll("\r", "?");
+        return content;
+    }
+
 }

@@ -4,38 +4,34 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.practice.summerpractice.entity.*;
+import com.sun.tools.javac.Main;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 public class RegisterData {
 
     public static final String BEARER_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS50ZXN0cGRyLmNvbS92MS9yZWdpc3RlciIsImlhdCI6MTY1NTc5MzAwMCwiZXhwIjoxNjU3MDAyNjAwLCJuYmYiOjE2NTU3OTMwMDAsImp0aSI6ImNKaWJ4OEpocUh4UmFDQWEiLCJzdWIiOjExNjA4OCwicHJ2IjoiMjNiZDVjODk0OWY2MDBhZGIzOWU3MDFjNDAwODcyZGI3YTU5NzZmNyJ9.pXy46zuGsIL0aiwHH3TL9uofCg6j-mluRRTxqDDCCHk";
-
-    static class QueryParams {
-        private int question_id;
-        private int questions_answer_id;
-        private final boolean is_training = false;
-
-        public QueryParams(int question_id, int questions_answer_id) {
-            this.question_id = question_id;
-            this.questions_answer_id = questions_answer_id;
-        }
-    }
+    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
         try {
-            fillQuestionsDatabase();
+            new RegisterData().fillRulesDatabase();
+            fillExamDatabase();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void fillRulesDatabase() throws IOException {
+    private void fillRulesDatabase() throws IOException {
         URL url = new URL("https://pdr.infotech.gov.ua/_next/data/_dcYOFIuVtVZQqHCIerrL/theory/rules/1.json");
         HttpURLConnection http = (HttpURLConnection) url.openConnection();
         http.setRequestProperty("Accept", "application/json");
@@ -48,82 +44,161 @@ public class RegisterData {
                 .get("rules").getAsJsonObject()
                 .get("themes").getAsJsonObject();
 
-        File rules = new File("C:\\summer 22\\traffic\\src\\main\\resources\\rulesList.json");
+        writeRulesFile(jsonObject);
+    }
+
+    private void writeRulesFile(JsonObject jsonObject) throws IOException {
+        File rules = new File("src/main/resources/rulesList.json");
         FileWriter fooWriter = new FileWriter(rules, false);
 
         fooWriter.write(jsonObject.toString());
         fooWriter.close();
     }
 
-    private static void fillQuestionsDatabase() throws IOException {
-        cancelExam();
-
-        byte[] out = getPostData();
-
-        HttpURLConnection httpPost = getConn("https://api.testpdr.com/v1/exam-questions-answer-histories", "POST", true);
-
-        OutputStream stream = httpPost.getOutputStream();
-        stream.write(out);
-
-        //System.out.println(httpPost.getHeaderFields().toString());
-        httpPost.connect();
-        System.out.println(httpPost.getResponseCode() + " LIKE WHY");
-
-        String s2 = streamToString(new GZIPInputStream(httpPost.getInputStream()));
-        System.out.println(s2);
-
-        httpPost.disconnect();
-
-        /*File questions = new File("C:\\summer 22\\traffic\\src\\main\\resources\\questions.json");
-        FileWriter fooWriter = new FileWriter(questions, false);
-
-        fooWriter.write("New Contents\n");
-        fooWriter.close();*/
+    private void rewriteRulesFile(){
+        /*Gson gson = new Gson();
+        ParserStartup parserStartup = new ParserStartup();
+        RulesDto rulesDto = parserStartup.parseRules();
+        writeRulesFile( new JsonParser().parse(gson.toJson(rulesDto)).getAsJsonObject());*/
     }
 
-    private static byte[] getPostData() throws IOException {
-        JsonObject jsonObject = getExamPDR();
+    private static void fillExamDatabase() throws IOException {
+        resetExam();
+        JsonObject examPDR = getExamPDR();
+        HashMap<Integer, byte[]> requests = getAllCorrectAnswerRequests(examPDR);
+        List<Question> questionList = new LinkedList<>();
+        for (int i = 0; i < 20; i++) {
+            HttpURLConnection httpPost = getConn("https://api.testpdr.com/v1/exam-questions-answer-histories", "POST", true);
+            httpPost.setRequestProperty("Content-Type", "application/json");
+            connectCall(requests, i, httpPost);
+            JsonObject correctAnswerResponse = getAnswerResponse(httpPost);
 
-        JsonArray questions = jsonObject.get("data").getAsJsonObject()
+            Question question = getNumberedQuestion(examPDR, i, correctAnswerResponse);
+            questionList.add(question);
+
+            if (!correctAnswerResponse.get("data").getAsJsonObject()
+                    .get("exam").isJsonNull()) {
+                resetExam();
+                examPDR = getExamPDR();
+                requests = getAllCorrectAnswerRequests(examPDR);
+            }
+
+            httpPost.disconnect();
+        }
+        writeExamFile(new ExamDto(questionList));
+    }
+
+    private static void writeExamFile(ExamDto examDto) throws IOException {
+        File rules = new File("src/main/resources/examExample.json");
+        FileWriter fooWriter = new FileWriter(rules, false);
+
+        Gson gson = new Gson();
+        fooWriter.write(gson.toJson(examDto));
+        fooWriter.close();
+    }
+
+    private static void connectCall(HashMap<Integer, byte[]> requests, int i, HttpURLConnection httpPost) throws IOException {
+        byte[] out = requests.get(i);
+        try (OutputStream stream = httpPost.getOutputStream()) {
+            stream.write(out, 0, out.length);
+        }
+        httpPost.connect();
+    }
+
+    private static Question getNumberedQuestion(JsonObject examPDR, int i, JsonObject answerJson) {
+        JsonObject jsonQuestion = examPDR.get("data").getAsJsonObject()
+                .get("questions").getAsJsonArray()
+                .get(i).getAsJsonObject();
+
+        int id = jsonQuestion.get("id").getAsInt();
+        String name = jsonQuestion.get("name").getAsJsonObject()
+                .get("uk").getAsString();
+        int ruleId = jsonQuestion.get("topic_traffic_rule_id").getAsInt();
+        String picture = jsonQuestion.get("picture").isJsonNull() ? null : jsonQuestion.get("picture").getAsString();
+
+        JsonArray jsonAnswers = jsonQuestion.get("questions_answers").getAsJsonArray();
+        List<Answer> answers = new LinkedList<>();
+        for (int j = 0; j < jsonAnswers.size(); j++) {
+            Answer answer = extractAnswerFromJson(jsonAnswers, j);
+            answers.add(answer);
+        }
+
+        int correctAnswerId = answerJson.get("data").getAsJsonObject()
+                .get("question_answer_history").getAsJsonObject()
+                .get("correct_answer_id").getAsInt();
+        return new Question(id, name, ruleId, picture, answers, correctAnswerId);
+    }
+
+    private static Answer extractAnswerFromJson(JsonArray jsonAnswers, int j) {
+        JsonObject jsonAnswer = jsonAnswers.get(j).getAsJsonObject();
+        int answerId = jsonAnswer.get("id").getAsInt();
+        String answerName = jsonAnswer.get("name").getAsJsonObject().get("uk").getAsString();
+        return new Answer(answerId, answerName);
+    }
+
+    private static JsonObject getAnswerResponse(HttpURLConnection httpPost) throws IOException {
+        BufferedReader reader;
+        String line;
+        StringBuilder responseContent = new StringBuilder();
+
+        int status = httpPost.getResponseCode();
+        if (status >= 300) {
+            reader = new BufferedReader(new InputStreamReader(httpPost.getErrorStream()));
+        } else {
+            reader = new BufferedReader(new InputStreamReader(httpPost.getInputStream()));
+        }
+        while ((line = reader.readLine()) != null) {
+            responseContent.append(line);
+        }
+        reader.close();
+        log.info("Question answer response code: " + status + "\n      Response content: " + responseContent);
+
+        return new JsonParser().parse(responseContent.toString()).getAsJsonObject();
+    }
+
+    private static HashMap<Integer, byte[]> getAllCorrectAnswerRequests(JsonObject examPDR) {
+        HashMap<Integer, byte[]> responses = new HashMap<>();
+        JsonArray questions = examPDR.get("data").getAsJsonObject()
                 .get("questions").getAsJsonArray();
-        JsonObject question = questions.get(0).getAsJsonObject();
+
+        for (int i = 0; i < 20; i++) {
+            responses.put(i, getAnswerRequest(questions, i));
+        }
+        return responses;
+    }
+
+    private static byte[] getAnswerRequest(JsonArray questions, int i) {
+        JsonObject question = questions.get(i).getAsJsonObject();
         JsonArray questionAnswers = question.get("questions_answers").getAsJsonArray();
         JsonObject answer = questionAnswers.get(0).getAsJsonObject();
         int question_id = question.get("id").getAsInt();
         int answer_id = answer.get("id").getAsInt();
 
         String data = "{\"question_id\":" + question_id + ",\"questions_answer_id\":" + answer_id + ",\"is_training\":false}";
-
         return data.getBytes(StandardCharsets.UTF_8);
     }
 
     private static JsonObject getExamPDR() throws IOException {
-        URL url = new URL("https://api.testpdr.com/v1/exam-questions?is_training=false");
-        HttpURLConnection http = (HttpURLConnection) url.openConnection();
-        http.setRequestProperty("Authorization", BEARER_TOKEN);
-        http.setRequestProperty("Accept", "application/json");
-        http.setRequestProperty("Accept-Encoding", "gzip");
+        HttpURLConnection http = getConn("https://api.testpdr.com/v1/exam-questions?is_training=false", "GET", false);
 
-        System.out.println(http.getResponseCode() + " " + http.getResponseMessage());
         String s = streamToString(new GZIPInputStream(http.getInputStream()));
         JsonObject jsonObject = new JsonParser().parse(s).getAsJsonObject();
-        System.out.println(jsonObject);
+        log.info("Getting exam response code: " + http.getResponseCode() + " " + http.getResponseMessage() + "\n      Response content : " + jsonObject);
+
         http.disconnect();
         return jsonObject;
     }
 
-    private static void cancelExam() throws IOException {
+    private static void resetExam() throws IOException {
         HttpURLConnection httpPost = getConn("https://api.testpdr.com/v1/cancel-exam", "POST", true);
 
         String data = "{\"is_training\":false}";
         byte[] out = data.getBytes(StandardCharsets.UTF_8);
-
         OutputStream stream = httpPost.getOutputStream();
         stream.write(out);
 
         httpPost.connect();
-
-        System.out.println(httpPost.getResponseCode() == HttpServletResponse.SC_OK ? "SUCCESSFULLY RESTARTED TEST" : "DIDNT RESTART");
+        log.info(httpPost.getResponseCode() == HttpServletResponse.SC_OK ? "SUCCESSFULLY RESTARTED TEST" : "DIDNT RESTART");
     }
 
     private static HttpURLConnection getConn(String url, String method, boolean doOutput) throws IOException {
@@ -142,11 +217,9 @@ public class RegisterData {
 
         StringBuilder sb = new StringBuilder();
         String line;
-
         while ((line = reader.readLine()) != null) {
             sb.append(line).append("\n");
         }
-
         reader.close();
 
         return sb.toString();

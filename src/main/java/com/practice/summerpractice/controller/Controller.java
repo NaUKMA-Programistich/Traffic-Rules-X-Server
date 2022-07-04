@@ -21,8 +21,6 @@ public class Controller {
     @ResponseBody
     @GetMapping("/exam")
     public ExamDto getExam() {
-        // todo сходить по ссылке https://api.testpdr.com/v1/exam-questions?is_training=false
-        // спарсить задание - картинка(если нету то налл), варианты ответа, правильный ответ, обьяснение
-        return new ExamDto();
+        return parserStartup.parseExam();
     }
 }
