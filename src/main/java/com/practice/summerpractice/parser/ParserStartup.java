@@ -84,20 +84,18 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         rule.setDescription(desc.substring(4, desc.length() - 1));
         String content = jsonObject.get("content").getAsJsonObject().entrySet().toArray()[0].toString();
         //TODO fix content \r\n + "Навчальне відео"
-        rule.setContent(content.substring(4, content.length() - 1));
+        rule.setContent(parseContent(content));
         return rule;
+    }
+
+    public static void main(String[] args) {
+        String test = parseContent(null);
+        System.out.println(test);
     }
 
     private static String parseContent(String content) {
         content = content.substring(4, content.length() - 1);
-        content = content.replaceAll("Навчальне відео.*", "");
-                /*//.replaceAll("\\r\\n\\r\\n\"", "\n")
-                .replaceAll("\r\n\r\n-", "")
-                .replaceAll("\\r\\n\\r\\n", "\n")
-                .replaceAll("\t", "")
-                .replaceAll("\r\n", "")
-                .replaceAll(".\"", "");*/
-        content = content.replaceAll("\r", "?");
+        content = content.replaceAll("\\{", "![").replaceAll("}", "]");
         return content;
     }
 
