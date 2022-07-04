@@ -24,6 +24,11 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
     }
 
     public ExamDto parseExam() {
+        try {
+            RegisterData.fillExamDatabase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("examExample.json");
         assert resourceAsStream != null;
         Reader fileReader = new InputStreamReader(resourceAsStream);
