@@ -1,13 +1,22 @@
 package com.practice.summerpractice.parser;
 
-import com.google.gson.*;
-import com.practice.summerpractice.entity.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.practice.summerpractice.entity.ExamDto;
+import com.practice.summerpractice.entity.Rule;
+import com.practice.summerpractice.entity.RulesDto;
+import com.practice.summerpractice.entity.Theme;
 import lombok.SneakyThrows;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,19 +92,14 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         String desc = jsonObject.get("description").getAsJsonObject().entrySet().toArray()[0].toString();
         rule.setDescription(desc.substring(4, desc.length() - 1));
         String content = jsonObject.get("content").getAsJsonObject().entrySet().toArray()[0].toString();
-        //TODO fix content \r\n + "Навчальне відео"
         rule.setContent(parseContent(content));
         return rule;
     }
 
-    public static void main(String[] args) {
-        String test = parseContent(null);
-        System.out.println(test);
-    }
-
     private static String parseContent(String content) {
         content = content.substring(4, content.length() - 1);
-        content = content.replaceAll("\\{", "![").replaceAll("}", "]");
+        content = content.replaceAll("\\{([^|]*)\\|([^|]*)\\|([^|]*)}", "![$1|$2]($3)")
+                .replaceAll("\\{([^|]*)\\|([^|]*)}", "{$1}");
         return content;
     }
 
