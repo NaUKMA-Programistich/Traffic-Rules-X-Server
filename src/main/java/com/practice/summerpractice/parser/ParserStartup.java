@@ -13,10 +13,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +25,7 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
     @SneakyThrows
     @Override
     public void onApplicationEvent(final ApplicationReadyEvent event) {
-        RegisterData.main(event.getArgs());
-        return;
+        new RegisterData().fillRulesDatabase();
     }
 
     public ExamDto parseExam() {
@@ -38,28 +34,13 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         } catch (IOException e) {
             e.printStackTrace();
         }
-        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("examExample.json");
-        assert resourceAsStream != null;
-        Reader fileReader = new InputStreamReader(resourceAsStream);
-        JsonObject object = new JsonParser().parse(fileReader).getAsJsonObject();
+        JsonObject object = readFile("src/main/resources/examExample.json");
         Gson gson = new Gson();
         return gson.fromJson(object, ExamDto.class);
     }
 
-    public RulesDto parseFixedRules() {
-        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("rulesList.json");
-        assert resourceAsStream != null;
-        Reader fileReader = new InputStreamReader(resourceAsStream);
-        JsonObject object = new JsonParser().parse(fileReader).getAsJsonObject();
-        Gson gson = new Gson();
-        return gson.fromJson(object, RulesDto.class);
-    }
-
     public RulesDto parseRules() {
-        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("rulesList.json");
-        assert resourceAsStream != null;
-        Reader fileReader = new InputStreamReader(resourceAsStream);
-        JsonObject object = new JsonParser().parse(fileReader).getAsJsonObject();
+        JsonObject object =  readFile("src/main/resources/rulesList.json");
         Set<Map.Entry<String, JsonElement>> themesJson = object.getAsJsonObject().entrySet();
         RulesDto rulesDto = new RulesDto();
         List<Theme> themes = new LinkedList<>();
@@ -68,6 +49,18 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         }
         rulesDto.setThemes(themes);
         return rulesDto;
+    }
+
+    private JsonObject readFile(String source) {
+        FileInputStream fileInputStream = null;
+        try {
+            fileInputStream = new FileInputStream(source);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        assert fileInputStream != null;
+        Reader fileReader = new InputStreamReader(fileInputStream);
+        return new JsonParser().parse(fileReader).getAsJsonObject();
     }
 
     private static Theme parseTheme(JsonObject jsonObject) {

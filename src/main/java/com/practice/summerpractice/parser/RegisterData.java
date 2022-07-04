@@ -55,13 +55,6 @@ public class RegisterData {
         fooWriter.close();
     }
 
-    private void rewriteRulesFile() {
-        /*Gson gson = new Gson();
-        ParserStartup parserStartup = new ParserStartup();
-        RulesDto rulesDto = parserStartup.parseRules();
-        writeRulesFile( new JsonParser().parse(gson.toJson(rulesDto)).getAsJsonObject());*/
-    }
-
     public static void fillExamDatabase() throws IOException {
         resetExam();
         JsonObject examPDR = getExamPDR();
