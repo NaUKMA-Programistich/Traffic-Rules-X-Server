@@ -31,7 +31,7 @@ public class RegisterData {
         }
     }
 
-    private void fillRulesDatabase() throws IOException {
+    public void fillRulesDatabase() throws IOException {
         URL url = new URL("https://pdr.infotech.gov.ua/_next/data/_dcYOFIuVtVZQqHCIerrL/theory/rules/1.json");
         HttpURLConnection http = (HttpURLConnection) url.openConnection();
         http.setRequestProperty("Accept", "application/json");
@@ -55,14 +55,14 @@ public class RegisterData {
         fooWriter.close();
     }
 
-    private void rewriteRulesFile(){
+    private void rewriteRulesFile() {
         /*Gson gson = new Gson();
         ParserStartup parserStartup = new ParserStartup();
         RulesDto rulesDto = parserStartup.parseRules();
         writeRulesFile( new JsonParser().parse(gson.toJson(rulesDto)).getAsJsonObject());*/
     }
 
-    private static void fillExamDatabase() throws IOException {
+    public static void fillExamDatabase() throws IOException {
         resetExam();
         JsonObject examPDR = getExamPDR();
         HashMap<Integer, byte[]> requests = getAllCorrectAnswerRequests(examPDR);
@@ -113,7 +113,9 @@ public class RegisterData {
         int id = jsonQuestion.get("id").getAsInt();
         String name = jsonQuestion.get("name").getAsJsonObject()
                 .get("uk").getAsString();
-        int ruleId = jsonQuestion.get("topic_traffic_rule_id").getAsInt();
+        String explanation = jsonQuestion.get("explanation").getAsJsonObject().get("uk").isJsonNull() ? null :
+                jsonQuestion.get("explanation").getAsJsonObject()
+                        .get("uk").getAsString();
         String picture = jsonQuestion.get("picture").isJsonNull() ? null : jsonQuestion.get("picture").getAsString();
 
         JsonArray jsonAnswers = jsonQuestion.get("questions_answers").getAsJsonArray();
@@ -126,7 +128,7 @@ public class RegisterData {
         int correctAnswerId = answerJson.get("data").getAsJsonObject()
                 .get("question_answer_history").getAsJsonObject()
                 .get("correct_answer_id").getAsInt();
-        return new Question(id, name, ruleId, picture, answers, correctAnswerId);
+        return new Question(id, name, explanation, picture, answers, correctAnswerId);
     }
 
     private static Answer extractAnswerFromJson(JsonArray jsonAnswers, int j) {

@@ -12,7 +12,7 @@ import java.util.List;
 public class Question {
     private int id;
     private String name;
-    private int ruleId;
+    private String explanation;
     private String pictureLink;
     private List<Answer> answers;
     private int correctAnswerId;
