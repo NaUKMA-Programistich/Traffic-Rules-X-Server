@@ -119,8 +119,15 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
      */
     private static String parseContent(String content) {
         content = content.substring(4, content.length() - 1);
-        content = content.replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)}", "\n![$1|$2]($3)\n")
+        content = content
+                .replaceAll("small", "original")
+                .replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)}\\), ", "\n![$1|$2]($3)\n")
+                .replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)},", "\n![$1|$2]($3)\n")
+                .replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)}.", "\n![$1|$2]($3)\n")
+                .replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)}", "\n![$1|$2]($3)\n")
                 .replaceAll("\\{([^|}]*)\\|([^|}]*)}", "{$1}")
+                .replaceAll("\\)\\)", ")")
+                .replaceAll("\n-\n", "\n")
                 .replaceAll("[*]*Навчальне відео.*", "");
         return content;
     }
