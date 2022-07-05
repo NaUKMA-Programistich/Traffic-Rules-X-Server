@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.practice.summerpractice.entity.*;
+import com.practice.summerpractice.entity.Answer;
+import com.practice.summerpractice.entity.ExamDto;
+import com.practice.summerpractice.entity.Question;
 import com.sun.tools.javac.Main;
 
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +35,7 @@ public class RegisterData {
 
     /**
      * Fills database with rules
+     *
      * @throws IOException - if an I/O or connection error occurs
      */
     public void fillRulesDatabase() throws IOException {
@@ -41,6 +44,7 @@ public class RegisterData {
         http.setRequestProperty("Accept", "application/json");
 
         String s = streamToString(http.getInputStream());
+        s = new String(s.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
         JsonObject jsonObject = new JsonParser().parse(s).getAsJsonObject();
         jsonObject = jsonObject.get("pageProps").getAsJsonObject()
                 .get("initialState").getAsJsonObject()
@@ -53,6 +57,7 @@ public class RegisterData {
 
     /**
      * Fills database with exam consisting of 20 random questions
+     *
      * @throws IOException - if an I/O or connection error occurs
      */
     public static void fillExamDatabase() throws IOException {
@@ -83,6 +88,7 @@ public class RegisterData {
 
     /**
      * Writes rules to file
+     *
      * @param jsonObject - JsonObject of rules
      * @throws IOException - if an I/O error occurs
      */
@@ -97,6 +103,7 @@ public class RegisterData {
 
     /**
      * Writes parsed exam to file
+     *
      * @param examDto - ExamDto parsed exam
      * @throws IOException - if an I/O error occurs
      */
@@ -111,8 +118,9 @@ public class RegisterData {
 
     /**
      * Gets connection and returns it
-     * @param url - URL to connect
-     * @param method - String requestMethod for connection
+     *
+     * @param url      - URL to connect
+     * @param method   - String requestMethod for connection
      * @param doOutput - boolean if it needs to do output
      * @return HttpURLConnection of set URL and method
      * @throws IOException - if a connection error occures
@@ -130,8 +138,9 @@ public class RegisterData {
 
     /**
      * Connects HttpURLConnection with given request
+     *
      * @param requests - HashMap of requests
-     * @param i - int key associated with needed request
+     * @param i        - int key associated with needed request
      * @param httpPost - HttpURLConnection connection which needs to be connected
      * @throws IOException - if an I/O or connection error occurs
      */
@@ -145,6 +154,7 @@ public class RegisterData {
 
     /**
      * Gets exam by connecting through api
+     *
      * @return JsonObject containing unparsed ExamDto
      * @throws IOException - if an I/O or connection error occurs
      */
@@ -161,8 +171,9 @@ public class RegisterData {
 
     /**
      * Extracts question from unparsed exam and adds correct answer
-     * @param examPDR - JsonObject unparsed exam
-     * @param i - int number of question
+     *
+     * @param examPDR    - JsonObject unparsed exam
+     * @param i          - int number of question
      * @param answerJson - JsonObject correct answer
      * @return Question containing correct answer
      */
@@ -194,6 +205,7 @@ public class RegisterData {
 
     /**
      * Gets response for HttpURLConnection request
+     *
      * @param httpPost - HttpURLConnection connection
      * @return JsonObject response
      * @throws IOException - if an I/O or connection error occurs
@@ -220,8 +232,9 @@ public class RegisterData {
 
     /**
      * Extracts an answer from an array of answers
+     *
      * @param jsonAnswers - JsonArray of answers
-     * @param j - int number of answer
+     * @param j           - int number of answer
      * @return Answer numbered answer
      */
     private static Answer extractAnswerFromJson(JsonArray jsonAnswers, int j) {
@@ -234,6 +247,7 @@ public class RegisterData {
 
     /**
      * Extracts a map of correct answer requests from exam
+     *
      * @param examPDR - JsonObject of unparsed exam
      * @return HashMap of Integer keys - answer numbers - and byte[] values - answer request content
      */
@@ -250,8 +264,9 @@ public class RegisterData {
 
     /**
      * Extracts answer connection request content from exam questions
+     *
      * @param questions - JsonArray of questions
-     * @param i - int question number from array
+     * @param i         - int question number from array
      * @return byte[] of request content
      */
     private static byte[] getAnswerRequest(JsonArray questions, int i) {
@@ -267,6 +282,7 @@ public class RegisterData {
 
     /**
      * Resets exam by connecting through api
+     *
      * @throws IOException - if an I/O or connection error occurs
      */
     private static void resetExam() throws IOException {
@@ -283,12 +299,13 @@ public class RegisterData {
 
     /**
      * Converts an InputStream to String type
+     *
      * @param inputStream - InputStream, from url connection
      * @return String containing contents of InputStream
      * @throws IOException - if an I/O error occurs
      */
     private static String streamToString(InputStream inputStream) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
         StringBuilder sb = new StringBuilder();
         String line;

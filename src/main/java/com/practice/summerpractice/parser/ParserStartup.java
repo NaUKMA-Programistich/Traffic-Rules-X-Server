@@ -30,6 +30,7 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
 
     /**
      * Refills database and parses exam from it
+     *
      * @return ExamDto of parsed exam
      */
     public ExamDto parseExam() {
@@ -45,10 +46,11 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
 
     /**
      * Parses rules from database
+     *
      * @return RulesDto of parsed rules
      */
     public RulesDto parseRules() {
-        JsonObject object =  readFile("src/main/resources/rulesList.json");
+        JsonObject object = readFile("src/main/resources/rulesList.json");
         Set<Map.Entry<String, JsonElement>> themesJson = object.getAsJsonObject().entrySet();
         RulesDto rulesDto = new RulesDto();
         List<Theme> themes = new LinkedList<>();
@@ -61,6 +63,7 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
 
     /**
      * Reads file from source
+     *
      * @param source - the file name
      * @return JsonObject got from reading file
      */
@@ -78,6 +81,7 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
 
     /**
      * Parses theme and filters it for unneeded info
+     *
      * @param jsonObject - JsonObject unparsed Theme
      * @return Theme parsed from the specified JsonObject
      */
@@ -97,6 +101,7 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
 
     /**
      * Parses rule and filters it for unneeded info
+     *
      * @param jsonObject - JsonObject unparsed Rule
      * @return Rule parsed from the specified JsonObject
      */
@@ -114,6 +119,7 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
 
     /**
      * Parses content and filters it for links or info
+     *
      * @param content - String needed to be parsed
      * @return the specified string parsed
      */
