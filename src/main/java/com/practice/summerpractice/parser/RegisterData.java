@@ -19,7 +19,7 @@ import java.util.zip.GZIPInputStream;
 
 public class RegisterData {
 
-    public static final String BEARER_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS50ZXN0cGRyLmNvbS92MS9yZWdpc3RlciIsImlhdCI6MTY1NTc5MzAwMCwiZXhwIjoxNjU3MDAyNjAwLCJuYmYiOjE2NTU3OTMwMDAsImp0aSI6ImNKaWJ4OEpocUh4UmFDQWEiLCJzdWIiOjExNjA4OCwicHJ2IjoiMjNiZDVjODk0OWY2MDBhZGIzOWU3MDFjNDAwODcyZGI3YTU5NzZmNyJ9.pXy46zuGsIL0aiwHH3TL9uofCg6j-mluRRTxqDDCCHk";
+    public static final String BEARER_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS50ZXN0cGRyLmNvbS92MS9sb2dpbi1zb2NpYWwiLCJpYXQiOjE2NTcwMDM1ODgsImV4cCI6MTY1ODIxMzE4OCwibmJmIjoxNjU3MDAzNTg4LCJqdGkiOiJlenZoMkxxN2tSZDZhRmdiIiwic3ViIjoxMTYwODgsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.DpGPneSoBTcZGxFZKLYoDNXG3xBTltYoct70W-IHU8M";
     private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
