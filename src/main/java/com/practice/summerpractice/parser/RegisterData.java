@@ -92,6 +92,7 @@ public class RegisterData {
 
         fooWriter.write(jsonObject.toString());
         fooWriter.close();
+        log.info("Rules file finished creating");
     }
 
     /**
