@@ -125,10 +125,13 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
                 .replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)},", "\n![$1|$2]($3)\n")
                 .replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)}.", "\n![$1|$2]($3)\n")
                 .replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)}", "\n![$1|$2]($3)\n")
-                .replaceAll("\\{([^|}]*)\\|([^|}]*)}", "{$1}")
+                .replaceAll("\\{([^|}]*)\\|([^|}]*)}", "$1")
                 .replaceAll("\\)\\)", ")")
                 .replaceAll("\n-\n", "\n")
-                .replaceAll("[*]*Навчальне відео.*", "");
+                .replaceAll("\n\\s", "\n")
+                .replaceAll("\n-\\s", "\n")
+                .replaceAll("[*]*Навчальне відео.*", "")
+                .replaceAll("[*]*Детальніше про.*", "");
         return content;
     }
 
