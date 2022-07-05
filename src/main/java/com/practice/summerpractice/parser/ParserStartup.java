@@ -28,6 +28,10 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         new RegisterData().fillRulesDatabase();
     }
 
+    /**
+     * Refills database and parses exam from it
+     * @return ExamDto of parsed exam
+     */
     public ExamDto parseExam() {
         try {
             RegisterData.fillExamDatabase();
@@ -39,6 +43,10 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         return gson.fromJson(object, ExamDto.class);
     }
 
+    /**
+     * Parses rules from database
+     * @return RulesDto of parsed rules
+     */
     public RulesDto parseRules() {
         JsonObject object =  readFile("src/main/resources/rulesList.json");
         Set<Map.Entry<String, JsonElement>> themesJson = object.getAsJsonObject().entrySet();
@@ -51,6 +59,11 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         return rulesDto;
     }
 
+    /**
+     * Reads file from source
+     * @param source - the file name
+     * @return JsonObject got from reading file
+     */
     private JsonObject readFile(String source) {
         FileInputStream fileInputStream = null;
         try {
@@ -63,6 +76,11 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         return new JsonParser().parse(fileReader).getAsJsonObject();
     }
 
+    /**
+     * Parses theme and filters it for unneeded info
+     * @param jsonObject - JsonObject unparsed Theme
+     * @return Theme parsed from the specified JsonObject
+     */
     private static Theme parseTheme(JsonObject jsonObject) {
         Theme theme = new Theme();
         theme.setId(jsonObject.get("id").getAsInt());
@@ -77,6 +95,11 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         return theme;
     }
 
+    /**
+     * Parses rule and filters it for unneeded info
+     * @param jsonObject - JsonObject unparsed Rule
+     * @return Rule parsed from the specified JsonObject
+     */
     private static Rule parseRule(JsonObject jsonObject) {
         Rule rule = new Rule();
         rule.setId(jsonObject.get("id").getAsInt());
@@ -89,6 +112,11 @@ public class ParserStartup implements ApplicationListener<ApplicationReadyEvent>
         return rule;
     }
 
+    /**
+     * Parses content and filters it for links or info
+     * @param content - String needed to be parsed
+     * @return the specified string parsed
+     */
     private static String parseContent(String content) {
         content = content.substring(4, content.length() - 1);
         content = content.replaceAll("\\{([^|}]*)\\|([^|}]*)\\|([^|}]*)}", "\n![$1|$2]($3)\n")

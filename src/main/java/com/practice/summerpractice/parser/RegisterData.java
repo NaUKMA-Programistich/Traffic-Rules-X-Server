@@ -31,6 +31,10 @@ public class RegisterData {
         }
     }
 
+    /**
+     * Fills database with rules
+     * @throws IOException - if an I/O or connection error occurs
+     */
     public void fillRulesDatabase() throws IOException {
         URL url = new URL("https://pdr.infotech.gov.ua/_next/data/_dcYOFIuVtVZQqHCIerrL/theory/rules/1.json");
         HttpURLConnection http = (HttpURLConnection) url.openConnection();
@@ -47,14 +51,10 @@ public class RegisterData {
         writeRulesFile(jsonObject);
     }
 
-    private void writeRulesFile(JsonObject jsonObject) throws IOException {
-        File rules = new File("src/main/resources/rulesList.json");
-        FileWriter fooWriter = new FileWriter(rules, false);
-
-        fooWriter.write(jsonObject.toString());
-        fooWriter.close();
-    }
-
+    /**
+     * Fills database with exam consisting of 20 random questions
+     * @throws IOException - if an I/O or connection error occurs
+     */
     public static void fillExamDatabase() throws IOException {
         resetExam();
         JsonObject examPDR = getExamPDR();
@@ -81,6 +81,24 @@ public class RegisterData {
         log.info("Finished registering exam, ready to use");
     }
 
+    /**
+     * Writes rules to file
+     * @param jsonObject - JsonObject of rules
+     * @throws IOException - if an I/O error occurs
+     */
+    private void writeRulesFile(JsonObject jsonObject) throws IOException {
+        File rules = new File("src/main/resources/rulesList.json");
+        FileWriter fooWriter = new FileWriter(rules, false);
+
+        fooWriter.write(jsonObject.toString());
+        fooWriter.close();
+    }
+
+    /**
+     * Writes parsed exam to file
+     * @param examDto - ExamDto parsed exam
+     * @throws IOException - if an I/O error occurs
+     */
     private static void writeExamFile(ExamDto examDto) throws IOException {
         File rules = new File("src/main/resources/examExample.json");
         FileWriter fooWriter = new FileWriter(rules, false);
@@ -90,6 +108,32 @@ public class RegisterData {
         fooWriter.close();
     }
 
+    /**
+     * Gets connection and returns it
+     * @param url - URL to connect
+     * @param method - String requestMethod for connection
+     * @param doOutput - boolean if it needs to do output
+     * @return HttpURLConnection of set URL and method
+     * @throws IOException - if a connection error occures
+     */
+    private static HttpURLConnection getConn(String url, String method, boolean doOutput) throws IOException {
+        URL postUrl = new URL(url);
+        HttpURLConnection httpPost = (HttpURLConnection) postUrl.openConnection();
+        httpPost.setRequestMethod(method);
+        httpPost.setDoOutput(doOutput);
+        httpPost.setRequestProperty("Accept", "application/json");
+        httpPost.setRequestProperty("Authorization", BEARER_TOKEN);
+        httpPost.setRequestProperty("Accept-Encoding", "gzip");
+        return httpPost;
+    }
+
+    /**
+     * Connects HttpURLConnection with given request
+     * @param requests - HashMap of requests
+     * @param i - int key associated with needed request
+     * @param httpPost - HttpURLConnection connection which needs to be connected
+     * @throws IOException - if an I/O or connection error occurs
+     */
     private static void connectCall(HashMap<Integer, byte[]> requests, int i, HttpURLConnection httpPost) throws IOException {
         byte[] out = requests.get(i);
         try (OutputStream stream = httpPost.getOutputStream()) {
@@ -98,6 +142,29 @@ public class RegisterData {
         httpPost.connect();
     }
 
+    /**
+     * Gets exam by connecting through api
+     * @return JsonObject containing unparsed ExamDto
+     * @throws IOException - if an I/O or connection error occurs
+     */
+    private static JsonObject getExamPDR() throws IOException {
+        HttpURLConnection http = getConn("https://api.testpdr.com/v1/exam-questions?is_training=false", "GET", false);
+
+        String s = streamToString(new GZIPInputStream(http.getInputStream()));
+        JsonObject jsonObject = new JsonParser().parse(s).getAsJsonObject();
+        log.info("Getting exam response code: " + http.getResponseCode() + " " + http.getResponseMessage() + "\n      Response content : " + jsonObject);
+
+        http.disconnect();
+        return jsonObject;
+    }
+
+    /**
+     * Extracts question from unparsed exam and adds correct answer
+     * @param examPDR - JsonObject unparsed exam
+     * @param i - int number of question
+     * @param answerJson - JsonObject correct answer
+     * @return Question containing correct answer
+     */
     private static Question getNumberedQuestion(JsonObject examPDR, int i, JsonObject answerJson) {
         JsonObject jsonQuestion = examPDR.get("data").getAsJsonObject()
                 .get("questions").getAsJsonArray()
@@ -124,14 +191,12 @@ public class RegisterData {
         return new Question(id, name, explanation, picture, answers, correctAnswerId);
     }
 
-    private static Answer extractAnswerFromJson(JsonArray jsonAnswers, int j) {
-        JsonObject jsonAnswer = jsonAnswers.get(j).getAsJsonObject();
-        int answerId = jsonAnswer.get("id").getAsInt();
-        String answerName = jsonAnswer.get("name").getAsJsonObject().get("uk").getAsString();
-        answerName = answerName.substring(0, answerName.length() - 1);
-        return new Answer(answerId, answerName);
-    }
-
+    /**
+     * Gets response for HttpURLConnection request
+     * @param httpPost - HttpURLConnection connection
+     * @return JsonObject response
+     * @throws IOException - if an I/O or connection error occurs
+     */
     private static JsonObject getAnswerResponse(HttpURLConnection httpPost) throws IOException {
         BufferedReader reader;
         String line;
@@ -152,6 +217,25 @@ public class RegisterData {
         return new JsonParser().parse(responseContent.toString()).getAsJsonObject();
     }
 
+    /**
+     * Extracts an answer from an array of answers
+     * @param jsonAnswers - JsonArray of answers
+     * @param j - int number of answer
+     * @return Answer numbered answer
+     */
+    private static Answer extractAnswerFromJson(JsonArray jsonAnswers, int j) {
+        JsonObject jsonAnswer = jsonAnswers.get(j).getAsJsonObject();
+        int answerId = jsonAnswer.get("id").getAsInt();
+        String answerName = jsonAnswer.get("name").getAsJsonObject().get("uk").getAsString();
+        answerName = answerName.substring(0, answerName.length() - 1);
+        return new Answer(answerId, answerName);
+    }
+
+    /**
+     * Extracts a map of correct answer requests from exam
+     * @param examPDR - JsonObject of unparsed exam
+     * @return HashMap of Integer keys - answer numbers - and byte[] values - answer request content
+     */
     private static HashMap<Integer, byte[]> getAllCorrectAnswerRequests(JsonObject examPDR) {
         HashMap<Integer, byte[]> responses = new HashMap<>();
         JsonArray questions = examPDR.get("data").getAsJsonObject()
@@ -163,6 +247,12 @@ public class RegisterData {
         return responses;
     }
 
+    /**
+     * Extracts answer connection request content from exam questions
+     * @param questions - JsonArray of questions
+     * @param i - int question number from array
+     * @return byte[] of request content
+     */
     private static byte[] getAnswerRequest(JsonArray questions, int i) {
         JsonObject question = questions.get(i).getAsJsonObject();
         JsonArray questionAnswers = question.get("questions_answers").getAsJsonArray();
@@ -174,17 +264,10 @@ public class RegisterData {
         return data.getBytes(StandardCharsets.UTF_8);
     }
 
-    private static JsonObject getExamPDR() throws IOException {
-        HttpURLConnection http = getConn("https://api.testpdr.com/v1/exam-questions?is_training=false", "GET", false);
-
-        String s = streamToString(new GZIPInputStream(http.getInputStream()));
-        JsonObject jsonObject = new JsonParser().parse(s).getAsJsonObject();
-        log.info("Getting exam response code: " + http.getResponseCode() + " " + http.getResponseMessage() + "\n      Response content : " + jsonObject);
-
-        http.disconnect();
-        return jsonObject;
-    }
-
+    /**
+     * Resets exam by connecting through api
+     * @throws IOException - if an I/O or connection error occurs
+     */
     private static void resetExam() throws IOException {
         HttpURLConnection httpPost = getConn("https://api.testpdr.com/v1/cancel-exam", "POST", true);
 
@@ -197,17 +280,12 @@ public class RegisterData {
         log.info(httpPost.getResponseCode() == HttpServletResponse.SC_OK ? "SUCCESSFULLY RESTARTED TEST" : "DIDNT RESTART");
     }
 
-    private static HttpURLConnection getConn(String url, String method, boolean doOutput) throws IOException {
-        URL postUrl = new URL(url);
-        HttpURLConnection httpPost = (HttpURLConnection) postUrl.openConnection();
-        httpPost.setRequestMethod(method);
-        httpPost.setDoOutput(doOutput);
-        httpPost.setRequestProperty("Accept", "application/json");
-        httpPost.setRequestProperty("Authorization", BEARER_TOKEN);
-        httpPost.setRequestProperty("Accept-Encoding", "gzip");
-        return httpPost;
-    }
-
+    /**
+     * Converts an InputStream to String type
+     * @param inputStream - InputStream, from url connection
+     * @return String containing contents of InputStream
+     * @throws IOException - if an I/O error occurs
+     */
     private static String streamToString(InputStream inputStream) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
