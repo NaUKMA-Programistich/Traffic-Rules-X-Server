@@ -128,6 +128,7 @@ public class RegisterData {
         JsonObject jsonAnswer = jsonAnswers.get(j).getAsJsonObject();
         int answerId = jsonAnswer.get("id").getAsInt();
         String answerName = jsonAnswer.get("name").getAsJsonObject().get("uk").getAsString();
+        answerName = answerName.substring(0, answerName.length() - 1);
         return new Answer(answerId, answerName);
     }
 
